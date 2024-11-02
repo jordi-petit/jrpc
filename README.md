@@ -1,0 +1,2 @@
+# jrpc
+Ideas for JRPC.
