@@ -22,10 +22,10 @@ export class JRPC {
 
     public add<Is extends TSchema, Os extends TSchema>(
         name: string,
-        func: Func<Static<Is>, Static<Os>>,
+        summary: string = '',
         input: Is,
         output: Os,
-        summary: string = '',
+        func: Func<Static<Is>, Static<Os>>,
     ) {
         this.endpoints.set(name, { name, func, input, output, summary })
         return this
