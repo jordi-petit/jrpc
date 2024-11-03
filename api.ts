@@ -1,7 +1,7 @@
 import { t } from "elysia"
 import { JRPC } from "@/jrpc"
 
-export const myJRPC = new JRPC()
+export const api = new JRPC()
     .add({
         name: "uppercase",
         input: t.String(),

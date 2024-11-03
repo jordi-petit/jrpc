@@ -7,13 +7,13 @@ import { html, Html } from '@elysiajs/html'
 
 export type Func<I, O> = (input: I) => Promise<O>
 
-export type EndPoint<Is extends TSchema, Os extends TSchema> = {
+export type EndPoint<I extends TSchema, O extends TSchema> = {
     name: string
     summary?: string
     description?: string
-    input: Is
-    output: Os
-    func: Func<Static<Is>, Static<Os>>
+    input: I
+    output: O
+    func: Func<Static<I>, Static<O>>
 }
 
 export class JRPC {
@@ -21,7 +21,7 @@ export class JRPC {
 
     public constructor() {}
 
-    public add<Is extends TSchema, Os extends TSchema>(endpoint: EndPoint<Is, Os>) {
+    public add<I extends TSchema, O extends TSchema>(endpoint: EndPoint<I, O>) {
         this.endpoints.set(endpoint.name, endpoint)
         return this
     }
@@ -88,9 +88,9 @@ export class JRPC {
                                 <i>{summary}</i>
                             </p>
                             <p>{description}</p>
-                            <h4>Input</h4>
+                            <h4>Input schema</h4>
                             <pre>{JSON.stringify(input)}</pre>
-                            <h4>Output</h4>
+                            <h4>Output schema</h4>
                             <pre>{JSON.stringify(output)}</pre>
                         </div>
                     ),
