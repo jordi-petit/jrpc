@@ -3,7 +3,7 @@
 import { Value } from '@sinclair/typebox/value'
 import { type Static, type TSchema } from '@sinclair/typebox'
 import Elysia from 'elysia'
-import { html } from '@elysiajs/html'
+import { html, Html } from '@elysiajs/html'
 
 export type Func<I, O> = (input: I) => Promise<O>
 
@@ -16,13 +16,17 @@ type EndPoint<I, O> = {
 }
 
 export class JRPC {
-
     private endpoints: Map<string, EndPoint<any, any>> = new Map()
 
-    public constructor() {
-    }
+    public constructor() {}
 
-    public add<Is extends TSchema, Os extends TSchema>(name: string, func: Func<Static<Is>, Static<Os>>, input: Is, output: Os, summary: string = '') {
+    public add<Is extends TSchema, Os extends TSchema>(
+        name: string,
+        func: Func<Static<Is>, Static<Os>>,
+        input: Is,
+        output: Os,
+        summary: string = '',
+    ) {
         this.endpoints.set(name, { name, func, input, output, summary })
         return this
     }
@@ -65,38 +69,46 @@ export class JRPC {
     }
 
     private generateDocumentation() {
-        let html = ''
+        const clients = (
+            <div>
+                <h1>Clients</h1>
+                <ul>
+                    <li>
+                        <a href="/jrpc/clients/python">Python</a>
+                    </li>
+                </ul>
+            </div>
+        )
 
-        html += `
-<h1>Clients</h1>
-<ul>
-    <li><a href="/jrpc/clients/python">Python</a></li>
-</ul>
-`
+        const functions = (
+            <div>
+                <h1>Functions</h1>
+                {Array.from(this.endpoints).map(([name, { input, output, summary }]) => (
+                    <div>
+                        <h2>
+                            <code>{name}</code>
+                        </h2>
+                        <p>{summary}</p>
+                        <h4>Input</h4>
+                        <pre>{JSON.stringify(input)}</pre>
+                        <h4>Output</h4>
+                        <pre>{JSON.stringify(output)}</pre>
+                    </div>
+                ))}
+            </div>
+        )
 
-
-        html += `
-<h1>Functions</h1>
-`
-        for (const [name, { input, output, summary }] of this.endpoints) {
-            html += `<h2><tt>${name}</tt></h2>\n`
-            html += `<p>${summary}</p>\n`
-            html += `<h4>Input</h4>\n`
-            html += `<pre>${JSON.stringify(input)}</pre>\n`
-            html += `<h4>Output</h4>\n`
-            html += `<pre>${JSON.stringify(output)}</pre>\n`
-        }
-        return `
-            <!DOCTYPE html>
+        return (
             <html>
                 <head>
                     <title>Documentation</title>
                 </head>
                 <body>
-                    ${html}
+                    {clients}
+                    {functions}
                 </body>
             </html>
-        `
+        )
     }
 
     private generateClientPython() {
@@ -123,7 +135,6 @@ def ${name}(arg: ${typify(input)}) -> ${typify(output)}:
     }
 }
 
-
 function check(value: any, schema: TSchema) {
     const result = Value.Clean(schema, Value.Clone(value))
     if (!Value.Check(schema, result)) {
@@ -134,11 +145,12 @@ function check(value: any, schema: TSchema) {
     return true
 }
 
-
 function typify(schema: TSchema): string {
     // segur que alguna llibreria ja fa això millor
     if (schema.type === 'object') {
-        const props = Object.entries(schema.properties).map(([key, value]: any) => `'${key}': ${typify(value)}`).join(', ')
+        const props = Object.entries(schema.properties)
+            .map(([key, value]: any) => `'${key}': ${typify(value)}`)
+            .join(', ')
         return `{${props}}`
     }
     if (schema.type === 'array') {

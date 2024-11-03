@@ -4,7 +4,7 @@
         "target": "ESNext",
         "module": "ESNext",
         "moduleDetection": "force",
-        "jsx": "react-jsx",
+        //"jsx": "react-jsx",
         "allowJs": true,
         /* Bundler mode */
         "moduleResolution": "bundler",
@@ -16,6 +16,10 @@
         "strict": true,
         "noFallthroughCasesInSwitch": true,
         "forceConsistentCasingInFileNames": true,
+        // Elysia html
+        "jsx": "react",
+        "jsxFactory": "Html.createElement",
+        "jsxFragmentFactory": "Html.Fragment",
         /* Use @ in import paths */
         "paths": {
             "@/*": ["./*"]
