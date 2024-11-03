@@ -117,6 +117,13 @@ import requests
 import json
 from typing import Any, TypedDict
 
+def _execute(name: str, arg: Any) -> Any:
+    response = requests.post('http://localhost:8000/jrpc', json={"name": name, "arg": arg})
+    result = response.json()
+    if result['error']:
+        raise Exception(result['error'])
+    # estaria bé verificar aquí que el tipus retornat compleix amb el promès (l'API ja ho fa però així el client també en tindria la seguretat)
+    return result['result']
 `
 
         for (const [name, { input, output, summary }] of this.endpoints) {
@@ -125,10 +132,7 @@ from typing import Any, TypedDict
 def ${name}(arg: ${typify(input)}) -> ${typify(output)}:
     '''${summary}'''
 
-    response = requests.post('http://localhost:8000/jrpc', json={"name": "${name}", "arg": arg})
-    result = response.json()
-    # estaria bé verificar que el tipus retornat compleix amb el promès (l'API ja ho fa però així el client també en tindria la seguretat)
-    return result
+    return _execute('${name}', arg)
 `
         }
         return python
