@@ -13,12 +13,24 @@ def _execute(name: str, arg: Any) -> Any:
 
 
 def uppercase(arg: str) -> str:
-    '''Converts a string to uppercase'''
+    
+    """
+    No summary
+
+    
+    """
+
 
     return _execute('uppercase', arg)
 
 
 def division(arg: {'a': float, 'b': float}) -> float:
-    '''Divides two numbers'''
+    
+    """
+    Divide two numbers
+
+    This function divides two numbers and may throw an error if the second number is zero.
+    """
+
 
     return _execute('division', arg)

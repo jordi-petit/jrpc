@@ -2,21 +2,21 @@ import { t } from "elysia"
 import { JRPC } from "@/jrpc"
 
 export const myJRPC = new JRPC()
-    .add(
-        "uppercase",
-        "Converts a string to uppercase",
-        t.String(),
-        t.String(),
-        async (s: string) => s.toUpperCase(),
-    )
+    .add({
+        name: "uppercase",
+        input: t.String(),
+        output: t.String(),
+        func: async (s: string) => s.toUpperCase(),
+    })
 
-    .add(
-        "division",
-        "Divides two numbers",
-        t.Object({ a: t.Number(), b: t.Number() }),
-        t.Number(),
-        async (input: { a: number, b: number }) => {
+    .add({
+        name: "division",
+        summary: "Divide two numbers",
+        description: "This function divides two numbers and may throw an error if the second number is zero.",
+        input: t.Object({ a: t.Number(), b: t.Number() }),
+        output: t.Number(),
+        func: async (input: { a: number, b: number }) => {
             if (input.b === 0) throw new Error("Division by zero")
             return input.a / input.b
         },
-    )
+    })

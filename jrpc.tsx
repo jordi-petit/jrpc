@@ -7,12 +7,13 @@ import { html, Html } from '@elysiajs/html'
 
 export type Func<I, O> = (input: I) => Promise<O>
 
-type EndPoint<I, O> = {
+export type EndPoint<Is extends TSchema, Os extends TSchema> = {
     name: string
-    func: Func<I, O>
-    input: TSchema
-    output: TSchema
-    summary: string
+    summary?: string
+    description?: string
+    input: Is
+    output: Os
+    func: Func<Static<Is>, Static<Os>>
 }
 
 export class JRPC {
@@ -20,14 +21,8 @@ export class JRPC {
 
     public constructor() {}
 
-    public add<Is extends TSchema, Os extends TSchema>(
-        name: string,
-        summary: string = '',
-        input: Is,
-        output: Os,
-        func: Func<Static<Is>, Static<Os>>,
-    ) {
-        this.endpoints.set(name, { name, func, input, output, summary })
+    public add<Is extends TSchema, Os extends TSchema>(endpoint: EndPoint<Is, Os>) {
+        this.endpoints.set(endpoint.name, endpoint)
         return this
     }
 
@@ -83,18 +78,23 @@ export class JRPC {
         const functions = (
             <div>
                 <h1>Functions</h1>
-                {Array.from(this.endpoints).map(([name, { input, output, summary }]) => (
-                    <div>
-                        <h2>
-                            <code>{name}</code>
-                        </h2>
-                        <p>{summary}</p>
-                        <h4>Input</h4>
-                        <pre>{JSON.stringify(input)}</pre>
-                        <h4>Output</h4>
-                        <pre>{JSON.stringify(output)}</pre>
-                    </div>
-                ))}
+                {Array.from(this.endpoints).map(
+                    ([name, { input, output, summary, description }]) => (
+                        <div>
+                            <h2>
+                                <code>{name}</code>
+                            </h2>
+                            <p>
+                                <i>{summary}</i>
+                            </p>
+                            <p>{description}</p>
+                            <h4>Input</h4>
+                            <pre>{JSON.stringify(input)}</pre>
+                            <h4>Output</h4>
+                            <pre>{JSON.stringify(output)}</pre>
+                        </div>
+                    ),
+                )}
             </div>
         )
 
@@ -117,6 +117,7 @@ import requests
 import json
 from typing import Any, TypedDict
 
+
 def _execute(name: str, arg: Any) -> Any:
     response = requests.post('http://localhost:8000/jrpc', json={"name": name, "arg": arg})
     result = response.json()
@@ -126,11 +127,15 @@ def _execute(name: str, arg: Any) -> Any:
     return result['result']
 `
 
-        for (const [name, { input, output, summary }] of this.endpoints) {
+        for (const [name, { input, output, summary, description }] of this.endpoints) {
             python += `
 
 def ${name}(arg: ${typify(input)}) -> ${typify(output)}:
-    '''${summary}'''
+    """
+    ${summary || 'No summary'}
+
+    ${description || 'No description'}
+    """
 
     return _execute('${name}', arg)
 `
