@@ -36,14 +36,32 @@ export class JRPC {
     }
 
     private async exec(body: any) {
-        console.log(body)
-        const { name, arg } = body
-        const endpoint = this.endpoints.get(name)
-        if (!endpoint) throw new Error(`Endpoint ${name} not found`)
-        if (!check(arg, endpoint.input)) throw new Error(`Invalid input`)
-        const res = await endpoint.func(arg)
-        if (!check(res, endpoint.output)) throw new Error(`Invalid Output`)
-        return res
+        try {
+            console.log(body)
+            const { name, arg } = body
+            const endpoint = this.endpoints.get(name)
+            if (!endpoint) throw new Error(`Endpoint ${name} not found`)
+            if (!check(arg, endpoint.input)) throw new Error(`Invalid input`)
+            const result = await endpoint.func(arg)
+            if (!check(result, endpoint.output)) throw new Error(`Invalid Output`)
+            return {
+                error: null,
+                result: result,
+            }
+        } catch (error) {
+            console.log(error)
+            if (error instanceof Error) {
+                return {
+                    error: error.message,
+                    result: null,
+                }
+            } else {
+                return {
+                    error: 'Unknown error at server',
+                    result: null,
+                }
+            }
+        }
     }
 
     private generateDocumentation() {
