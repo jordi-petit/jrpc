@@ -57,7 +57,7 @@ function genPythonSubModule(mod: ModuleJRPC): string {
 
     return `
 
-class ${mod.module}:
+class ${mod.name}:
 
 ${indent(module)}
 

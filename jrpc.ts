@@ -22,10 +22,11 @@ export type EndPoint<I extends TSchema, O extends TSchema> = {
 export class JRPC {
     private endpoints: Map<string, EndPoint<any, any>> = new Map()
     private submodules: JRPC[] = []
-    private module: string
+    private name: string
+    private models: Record<string, TSchema> = {}
 
-    public constructor(module: string) {
-        this.module = module
+    public constructor(name: string) {
+        this.name = name
     }
 
     public add<I extends TSchema, O extends TSchema>(what: JRPC | EndPoint<I, O>) {
@@ -44,6 +45,11 @@ export class JRPC {
             .get('/jrpc/openjrpc.json', () => this.generateOpenJRPC())
             .get('/jrpc/doc', () => doc(this.generateOpenJRPC()))
             .get('/jrpc/clients/python', () => genPython(this.generateOpenJRPC()))
+    }
+
+    public model(models: Record<string, TSchema>) {
+        this.models = Object.assign(this.models, models)
+        return this
     }
 
     private async exec(body: any) {
@@ -94,12 +100,20 @@ export class JRPC {
             }),
         )
 
+        pairSchemas(functions, this.models)
+
         const submodules = this.submodules.map((jrpc) => jrpc.generateModuleJRPC())
 
+        const models = Object.entries(this.models).map(([name, schema]) => ({
+            name,
+            schema,
+        }))
+
         const openjrpc = {
-            module: this.module,
+            name: this.name,
             functions,
             submodules,
+            models,
         }
 
         return openjrpc
@@ -114,4 +128,22 @@ function check(value: any, schema: TSchema) {
         return false
     }
     return true
+}
+
+
+function pairSchemas(functions: FunctionJRPC[], models: Record<string, TSchema>) {
+    functions.forEach((func) => {
+        func.inputName = findSchemaName(func.input, models)
+        func.outputName = findSchemaName(func.output, models)
+    })
+}
+
+
+function findSchemaName(schema: TSchema, models: Record<string, TSchema>): string | undefined {
+    for (const [name, model] of Object.entries(models)) {
+        if (JSON.stringify(schema) === JSON.stringify(model)) {
+            return name
+        }
+    }
+    return undefined
 }

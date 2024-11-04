@@ -6,12 +6,20 @@ export type FunctionJRPC = {
     description?: string
     input: TSchema
     output: TSchema
+    inputName?: string
+    outputName?: string
+}
+
+export type ModelJRPC = {
+    name: string
+    schema: TSchema
 }
 
 export type ModuleJRPC = {
-    module: string
+    name: string
     functions: Array<FunctionJRPC>
     submodules: ModuleJRPC[]
+    models: ModelJRPC[]
 }
 
 export type OpenJRPC = {

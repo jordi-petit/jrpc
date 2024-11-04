@@ -2,15 +2,21 @@ import { t } from "elysia"
 import { JRPC } from "@/jrpc"
 import { misc } from "@/api-misc"
 
+const TPair = t.Object({ a: t.Number(), b: t.Number() })
+const TInputWord = t.String({ description: "A word to be converted to uppercase" })
+const TOutputWord = t.String({ description: "The word converted to uppercase" })
+
 export const api = new JRPC('api')
+
+    .model({ TPair, TInputWord, TOutputWord })
 
     .add(misc)
 
     .add({
         name: "uppercase",
         summary: "Convert a string to uppercase",
-        input: t.String(),
-        output: t.String(),
+        input: TInputWord,
+        output: TOutputWord,
         func: async (s: string) => s.toUpperCase(),
     })
 
@@ -18,7 +24,7 @@ export const api = new JRPC('api')
         name: "division",
         summary: "Divide two numbers",
         description: "This function divides two numbers and may throw an error if the second number is zero.",
-        input: t.Object({ a: t.Number(), b: t.Number() }),
+        input: TPair,
         output: t.Number(),
         func: async (input: { a: number, b: number }) => {
             if (input.b === 0) throw new Error("Division by zero")

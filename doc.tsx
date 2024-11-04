@@ -1,4 +1,4 @@
-import type { OpenJRPC, FunctionJRPC, ModuleJRPC } from '@/openjrpc'
+import type { OpenJRPC, FunctionJRPC, ModuleJRPC, ModelJRPC } from '@/openjrpc'
 import { Html } from '@elysiajs/html'
 
 export function doc(openjrpc: OpenJRPC) {
@@ -42,14 +42,17 @@ function DocModule(openjrpc: ModuleJRPC, parents: string[]) {
                 <h1 class="text-xl text-fuchsia-600 border-solid border-2 border-sky-500 rounded-lg p-2 mb-4 font-mono">
                     {parents.join('.')}
                     {parents.length ? '.' : ''}
-                    {openjrpc.module}
+                    {openjrpc.name}
                 </h1>
                 <div class="pl-8">
-                    <div>{openjrpc.functions.map((func) => DocFunction(func))}</div>
+                    <div>{openjrpc.models.map(DocModel)}</div>
+                </div>
+                <div class="pl-8">
+                    <div>{openjrpc.functions.map(DocFunction)}</div>
                 </div>
             </div>
             <div>
-                {openjrpc.submodules.map((sub) => DocModule(sub, parents.concat(openjrpc.module)))}
+                {openjrpc.submodules.map((sub) => DocModule(sub, parents.concat(openjrpc.name)))}
             </div>
         </>
     )
@@ -59,15 +62,36 @@ function DocFunction(func: FunctionJRPC) {
     return (
         <div class="py-4">
             <h2 class="text-lg font-mono border-solid border-2 border-sky-100 rounded-sm mb-4 px-2">
-                {func.name}
+                [F] {func.name}
             </h2>
             <div class="ml-8 mb-4">
                 <p class="italic mb-4">{func.summary}</p>
                 {func.description ? <p class="mb-4">{func.description}</p> : ''}
-                <p>Input schema</p>
-                <pre class="text-sm text-gray-400 mb-4">{JSON.stringify(func.input)}</pre>
-                <p>Output schema</p>
-                <pre class="text-sm text-gray-400">{JSON.stringify(func.output)}</pre>
+                <p>
+                    Input schema: <span class="text-red-300">{func.inputName}</span>{' '}
+                </p>
+                <pre class="text-xs text-gray-400 mb-4">
+                    {JSON.stringify(func.input, undefined, 4)}
+                </pre>
+                <p>
+                    Output schema: <span class="text-red-300">{func.outputName}</span>{' '}
+                </p>
+                <pre class="text-xs text-gray-400">{JSON.stringify(func.output, undefined, 4)}</pre>
+            </div>
+        </div>
+    )
+}
+
+function DocModel(model: ModelJRPC) {
+    return (
+        <div class="py-4">
+            <h2 class="text-lg font-mono border-solid border-2 border-red-300 text-red-300 rounded-sm mb-4 px-2">
+                [T] {model.name}
+            </h2>
+            <div class="ml-8 mb-4">
+                <pre class="text-xs text-gray-400 mb-4">
+                    {JSON.stringify(model.schema, undefined, 4)}
+                </pre>
             </div>
         </div>
     )
