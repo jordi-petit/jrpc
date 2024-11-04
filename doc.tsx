@@ -1,4 +1,4 @@
-import type { OpenJRPC, FunctionJRPC, ModuleJRPC } from '@/openrpc'
+import type { OpenJRPC, FunctionJRPC, ModuleJRPC } from '@/openjrpc'
 import { Html } from '@elysiajs/html'
 
 export function doc(openjrpc: OpenJRPC) {

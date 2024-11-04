@@ -5,7 +5,8 @@ import { type Static, type TSchema } from '@sinclair/typebox'
 import Elysia from 'elysia'
 import { html } from '@elysiajs/html'
 import { doc } from '@/doc'
-import type { OpenJRPC, ModuleJRPC, FunctionJRPC } from '@/openrpc'
+import { genPython } from '@/gen-python'
+import type { OpenJRPC, ModuleJRPC, FunctionJRPC } from '@/openjrpc'
 
 export type Func<I, O> = (input: I) => Promise<O>
 
@@ -42,6 +43,7 @@ export class JRPC {
             .post('/jrpc', async ({ body }: { body: any }) => await this.exec(body))
             .get('/jrpc/openjrpc.json', () => this.generateOpenJRPC())
             .get('/jrpc/doc', () => doc(this.generateOpenJRPC()))
+            .get('/jrpc/clients/python', () => genPython(this.generateOpenJRPC()))
     }
 
     private async exec(body: any) {
@@ -102,38 +104,6 @@ export class JRPC {
 
         return openjrpc
     }
-
-    private generateClientPython() {
-        let python = `
-import requests
-import json
-from typing import Any, TypedDict
-
-
-def _execute(name: str, arg: Any) -> Any:
-    response = requests.post('http://localhost:8000/jrpc', json={"name": name, "arg": arg})
-    result = response.json()
-    if result['error']:
-        raise Exception(result['error'])
-    # estaria bé verificar aquí que el tipus retornat compleix amb el promès (l'API ja ho fa però així el client també en tindria la seguretat)
-    return result['result']
-`
-
-        for (const [name, { input, output, summary, description }] of this.endpoints) {
-            python += `
-
-def ${name}(arg: ${typify(input)}) -> ${typify(output)}:
-    """
-    ${summary || 'No summary'}
-
-    ${description || 'No description'}
-    """
-
-    return _execute('${name}', arg)
-`
-        }
-        return python
-    }
 }
 
 function check(value: any, schema: TSchema) {
@@ -144,30 +114,4 @@ function check(value: any, schema: TSchema) {
         return false
     }
     return true
-}
-
-function typify(schema: TSchema): string {
-    // segur que alguna llibreria ja fa això millor
-    if (schema.type === 'object') {
-        const props = Object.entries(schema.properties)
-            .map(([key, value]: any) => `'${key}': ${typify(value)}`)
-            .join(', ')
-        return `{${props}}`
-    }
-    if (schema.type === 'array') {
-        return `list[${typify(schema.items)}]`
-    }
-    if (schema.type === 'string') {
-        return 'str'
-    }
-    if (schema.type === 'number') {
-        return 'float'
-    }
-    if (schema.type === 'integer') {
-        return 'int'
-    }
-    if (schema.type === 'boolean') {
-        return 'bool'
-    }
-    throw new Error(`Type ${schema.type} not supported`)
 }
