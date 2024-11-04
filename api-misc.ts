@@ -1,11 +1,7 @@
 import { t } from "elysia"
 import { JRPC } from "@/jrpc"
-import { misc } from "@/api-misc"
 
-export const api = new JRPC('api')
-
-    .add(misc)
-
+export const misc = new JRPC('misc')
     .add({
         name: "uppercase",
         summary: "Convert a string to uppercase",

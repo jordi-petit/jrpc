@@ -18,11 +18,19 @@ export type EndPoint<I extends TSchema, O extends TSchema> = {
 
 export class JRPC {
     private endpoints: Map<string, EndPoint<any, any>> = new Map()
+    private submodules: JRPC[] = []
+    private module: string
 
-    public constructor() {}
+    public constructor(module: string) {
+        this.module = module
+    }
 
-    public add<I extends TSchema, O extends TSchema>(endpoint: EndPoint<I, O>) {
-        this.endpoints.set(endpoint.name, endpoint)
+    public add<I extends TSchema, O extends TSchema>(what: JRPC | EndPoint<I, O>) {
+        if (what instanceof JRPC) {
+            this.submodules.push(what)
+        } else {
+            this.endpoints.set(what.name, what)
+        }
         return this
     }
 
@@ -30,8 +38,7 @@ export class JRPC {
         return new Elysia()
             .use(html())
             .post('/jrpc', async ({ body }: { body: any }) => await this.exec(body))
-            .get('/jrpc/doc', () => this.generateDocumentation())
-            .get('/jrpc/clients/python', () => this.generateClientPython())
+            .get('/jrpc/openjrpc.json', () => this.generateOpenJRPC())
     }
 
     private async exec(body: any) {
@@ -63,6 +70,28 @@ export class JRPC {
         }
     }
 
+    private generateOpenJRPC(): any {
+        const functions = Array.from(this.endpoints).map(
+            ([name, { input, output, summary, description }]) => ({
+                name,
+                summary,
+                description,
+                input,
+                output,
+            }),
+        )
+
+        const submodules = this.submodules.map((jrpc) => jrpc.generateOpenJRPC())
+
+        const openjrpc = {
+            module: this.module,
+            functions,
+            submodules,
+        }
+
+        return openjrpc
+    }
+
     private generateDocumentation() {
         const clients = (
             <div>
@@ -80,18 +109,24 @@ export class JRPC {
                 <h1>Functions</h1>
                 {Array.from(this.endpoints).map(
                     ([name, { input, output, summary, description }]) => (
-                        <div>
-                            <h2>
+                        <div class="card mb-4">
+                            <h2 class="card-header">
                                 <code>{name}</code>
                             </h2>
-                            <p>
-                                <i>{summary}</i>
-                            </p>
-                            <p>{description}</p>
-                            <h4>Input schema</h4>
-                            <pre>{JSON.stringify(input)}</pre>
-                            <h4>Output schema</h4>
-                            <pre>{JSON.stringify(output)}</pre>
+                            <div class="card-body">
+                                <div class="card-text">
+                                    <p>{summary}</p>
+                                    <p>{description}</p>
+                                    <p>
+                                        <b>Input schema</b>
+                                    </p>
+                                    <pre>{JSON.stringify(input)}</pre>
+                                    <p>
+                                        <b>Output schema</b>
+                                    </p>
+                                    <pre>{JSON.stringify(output)}</pre>
+                                </div>
+                            </div>
                         </div>
                     ),
                 )}
