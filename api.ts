@@ -3,12 +3,14 @@ import { JRPC } from "@/jrpc"
 import { misc } from "@/api-misc"
 
 const TPair = t.Object({ a: t.Number(), b: t.Number() })
+const TPairs = t.Array(TPair)
+const TDoublePair = t.Object({ x: TPair, y: TPair })
 const TInputWord = t.String({ description: "A word to be converted to uppercase" })
 const TOutputWord = t.String({ description: "The word converted to uppercase" })
 
 export const api = new JRPC('api')
 
-    .model({ TPair, TInputWord, TOutputWord })
+    .model({ TPair, TInputWord, TOutputWord, TPairs, TDoublePair })
 
     .add(misc)
 

@@ -6,7 +6,7 @@ import Elysia from 'elysia'
 import { html } from '@elysiajs/html'
 import { doc } from '@/doc'
 import { genPython } from '@/gen-python'
-import type { OpenJRPC, ModuleJRPC, FunctionJRPC } from '@/openjrpc'
+import type { OpenJRPC, ModuleJRPC, FunctionJRPC, ModelJRPC } from '@/openjrpc'
 
 export type Func<I, O> = (input: I) => Promise<O>
 
@@ -100,7 +100,7 @@ export class JRPC {
             }),
         )
 
-        pairSchemas(functions, this.models)
+        pairFunctionSchemaNamesWithModels(functions, this.models)
 
         const submodules = this.submodules.map((jrpc) => jrpc.generateModuleJRPC())
 
@@ -108,6 +108,8 @@ export class JRPC {
             name,
             schema,
         }))
+
+        pairModelsWithSchemas(models, this.models)
 
         const openjrpc = {
             name: this.name,
@@ -131,7 +133,7 @@ function check(value: any, schema: TSchema) {
 }
 
 
-function pairSchemas(functions: FunctionJRPC[], models: Record<string, TSchema>) {
+function pairFunctionSchemaNamesWithModels(functions: FunctionJRPC[], models: Record<string, TSchema>) {
     functions.forEach((func) => {
         func.inputName = findSchemaName(func.input, models)
         func.outputName = findSchemaName(func.output, models)
@@ -146,4 +148,24 @@ function findSchemaName(schema: TSchema, models: Record<string, TSchema>): strin
         }
     }
     return undefined
+}
+
+
+function pairModelsWithSchemas(models: ModelJRPC[], schemas: Record<string, TSchema>) {
+    for (const model of models) {
+        if (model.schema.type === 'array') {
+            const items = model.schema.items
+            const name = findSchemaName(items, schemas)
+            if (name) {
+                model.schema.items = { $ref: name }
+            }
+        } else if (model.schema.type === 'object') {
+            for (const [key, value] of Object.entries(model.schema.properties)) {
+                const name = findSchemaName(value as TSchema, schemas)
+                if (name) {
+                    model.schema.properties[key] = { $ref: name }
+                }
+            }
+        }
+    }
 }
